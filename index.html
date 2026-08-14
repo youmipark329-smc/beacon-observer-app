@@ -56,6 +56,11 @@
     font-weight:800;cursor:pointer;font-family:inherit;margin-top:14px}
   .big.ghost{background:transparent;color:var(--accent);border:1.5px solid var(--accent)}
   .big.alert{background:var(--alert)}
+  .big.marker{background:var(--soft);color:var(--accent);border:1.5px solid var(--accent-2)}
+  .big.marker.flash{background:var(--accent);color:#fff}
+  .mcount{display:inline-block;min-width:22px;padding:1px 7px;margin-left:6px;border-radius:999px;background:var(--accent);color:#fff;font-size:12px;font-weight:800;vertical-align:middle}
+  .big.marker.flash .mcount{background:#fff;color:var(--accent)}
+  .markerhint{font-size:11px;color:var(--muted);text-align:center;margin:-4px 0 0}
   .big:active{transform:scale(.99)}
   .rowbtns{display:flex;gap:8px;flex-wrap:wrap}
   .rowbtns .big{margin-top:0;flex:1}
@@ -204,6 +209,9 @@
           <input class="memo" id="memo" placeholder="메모 ✎ (불확실 시 필수)" autocomplete="off">
         </div>
       </div>
+      <button class="big marker" id="markerBtn" type="button">⏱ 동기마커 <span id="mcount" class="mcount">0</span></button>
+      <p class="markerhint">패치를 툭툭 두드리는 순간 함께 탭 — 시각정합(#8) 실측용</p>
+
       <div class="card log">
         <h4>이벤트 로그 <a id="undo" role="button" tabindex="0">실행취소</a></h4>
         <ul class="events" id="events"><li class="empty">아직 기록 없음 — 상태 버튼을 눌러보세요</li></ul>
@@ -255,7 +263,7 @@
     </section>
 
   </div>
-  <div class="brand">BEACON 관찰코딩 · v1.0 (PWA) · <span id="verMode">—</span></div>
+  <div class="brand">BEACON 관찰코딩 · v1.1 (PWA) · <span id="verMode">—</span></div>
 </div>
 
 <div class="toast" id="toast">

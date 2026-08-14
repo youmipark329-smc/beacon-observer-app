@@ -75,6 +75,8 @@ PWA는 **HTTPS 주소로 열어야** "홈 화면에 추가 + 오프라인 설치
   (`t_server_start`,`t_server_end`,`clock_offset_ms`,`sync_flag`,`session_id`,`device_serial`).
   `record_id`는 **이벤트 생성 시점에 고정**(undo 후에도 불변) → 서버 재적재 시 `(session_id, record_id)` 로 **멱등(중복0)**.
   `device_serial`(패치 시리얼)은 세션 시작화면 ★필드에서 입력(등록연계, RFP §6-5).
+- **`⏱ 동기마커`(v1.1):** 코딩화면 버튼. 패치를 툭툭 두드리는 순간 함께 탭하면 `code=sync_marker` 순간행 기록
+  (`t_server`·`clock_offset_ms`·`sync_flag` 포함). **시각정합 #8 실측용** — 서버 IMU 스파이크와 페어링해 폰–서버 시각차 산출(파일럿 SOP §4). `"→"` 미포함이라 κ·정렬 스크립트는 자동 무시.
 - **내보내기:** 세션 종료 요약 화면의 **CSV 저장**, 또는 시작화면 **전체 CSV 내보내기**(모든 세션 1파일),
   또는 지난 세션 목록의 **CSV** 버튼(세션별). UTF-8 BOM·CRLF(엑셀 호환).
 - **결합:** 서버에서 `patient_id`(=measurement_code) + `t_server`(±매칭창)로

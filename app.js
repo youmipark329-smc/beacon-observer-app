@@ -93,7 +93,7 @@ function newSession(meta){
     createdDevice:Date.now(),
     cur:'LIE', ctx:'none', unc:false, sensor:'on', reminded:false, ended:false, endTs:null,
     sessionStart:ts, boutStart:ts, boutStartDev:Date.now(), boutEnter:'LIE', boutIsBed:false,
-    seq:0, bouts:[], ctxStart:ts, ctxBouts:[], motions:[], log:[], undoCount:0, uncCount:0
+    seq:0, bouts:[], ctxStart:ts, ctxBouts:[], motions:[], markers:[], log:[], undoCount:0, uncCount:0
   };
 }
 var _saveT=null;
@@ -159,12 +159,21 @@ function tapContext(x){
   S.log.push({t:clock(ts),kind:'context',code:'context='+newc,bed:false});
   persist(); render();
 }
+function tapSyncMarker(){
+  if(!S||S.ended)return;
+  var ts=Clock.now();
+  S.markers.push({rid:'r'+(++S.seq),t:ts,tDev:Clock.deviceNow(),offset:Clock.offsetMs,flag:Clock.flag});
+  S.log.push({t:clock(ts),kind:'marker',code:'⏱ sync_marker',bed:false});
+  var b=$('markerBtn'); b.classList.add('flash'); setTimeout(function(){b.classList.remove('flash');},450);
+  persist(); render();
+}
 function showToast(){var t=$('toast');t.classList.add('show');clearTimeout(showToast._h);showToast._h=setTimeout(function(){t.classList.remove('show');},6000);}
 function doUndo(){
   if(!S||S.ended||!S.log.length)return;
   var e=S.log.pop(); S.undoCount++;
   if(e.kind==='transition'){ var b=S.bouts.pop(); if(b){S.cur=b.state;S.boutStart=b.start;S.boutStartDev=b.startDev;S.boutEnter=b.enter;S.boutIsBed=b.isBed;} }
   else if(e.kind==='motion'){ S.motions.pop(); }
+  else if(e.kind==='marker'){ S.markers.pop(); }
   else if(e.kind==='context'){ var cb=S.ctxBouts.pop(); if(cb){S.ctx=cb.ctx;S.ctxStart=cb.start;} }
   persist(); render();
 }
@@ -185,6 +194,7 @@ function render(){
   $('unc').classList.toggle('on',S.unc);
   $('sensor').textContent=S.sensor; $('sensorbtn').classList.toggle('senswarn',S.sensor!=='on');
   $('memo').classList.toggle('req',S.unc&&!$('memo').value.trim());
+  var mcEl=$('mcount'); if(mcEl) mcEl.textContent=(S.markers||[]).length;
   var ul=$('events');
   if(!S.log.length){ ul.innerHTML='<li class="empty">아직 기록 없음 — 상태 버튼을 눌러보세요</li>'; }
   else{ ul.innerHTML='';
@@ -215,6 +225,11 @@ function sessRows(sess,includeHead,nowTs){
     out.push([m.rid||('r'+(n++)),sess.obs,sess.pid,dateStr(m.t),clock(m.t),clock(m.t),
       'motion',0,'',m.ibm?1:0,sess.sensor,m.unc?1:0,'0.0',m.note||'',sess.enroll,sess.set||'',m.code,
       isoMs(m.t),isoMs(m.t),(m.offset==null?'':m.offset),m.flag||'',sess.id,sess.serial||'']);
+  });
+  (sess.markers||[]).forEach(function(k){
+    out.push([k.rid||('r'+(n++)),sess.obs,sess.pid,dateStr(k.t),clock(k.t),clock(k.t),
+      'sync_marker',0,'',0,sess.sensor,0,'0.0','',sess.enroll,sess.set||'','',
+      isoMs(k.t),isoMs(k.t),(k.offset==null?'':k.offset),k.flag||'',sess.id,sess.serial||'']);
   });
   return out;
 }
@@ -247,6 +262,7 @@ function buildSummary(sess,endTs){
     kpi(String(trans),'','상태 전환 수')+
     kpi(fmtDur(off),(off>0?'warn':''),'미관찰 off_view/ward')+
     kpi(String(sess.motions.length),'','움직임 태그')+
+    kpi(String((sess.markers||[]).length),((sess.markers||[]).length>0?'good':''),'⏱ 동기마커(#8)')+
     kpi(String(sess.uncCount),(sess.uncCount>0?'alert':''),'불확실 횟수')+
     kpi(String(sess.undoCount),'','실행취소');
   var maxv=Math.max(1,byState.LIE,byState.SIT,byState.STD,byState.WLK);
@@ -312,6 +328,7 @@ function backFromSettings(){ if(S&&!S.ended){ show('codeScreen'); render(); } el
 function bind(){
   $('startBtn').addEventListener('click',startSession);
   $('endbtn').addEventListener('click',endSession);
+  $('markerBtn').addEventListener('click',tapSyncMarker);
   $('undo').addEventListener('click',doUndo);
   $('undo').addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){doUndo();e.preventDefault();}});
   $('unc').addEventListener('click',function(){if(!S||S.ended)return;S.unc=!S.unc;if(S.unc)S.uncCount++;persist();render();$('memo').focus();});
