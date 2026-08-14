@@ -91,8 +91,8 @@ function newSession(meta){
     id:'S'+Date.now()+'-'+Math.floor(performance.now()),
     obs:meta.obs, pid:meta.pid, set:meta.set||'', enroll:meta.enroll||'', serial:meta.serial||'', sessNote:meta.note||'',
     createdDevice:Date.now(),
-    cur:'LIE', ctx:'none', unc:false, sensor:'on', reminded:false, ended:false, endTs:null,
-    sessionStart:ts, boutStart:ts, boutStartDev:Date.now(), boutEnter:'LIE', boutIsBed:false,
+    cur:(meta.start||'LIE'), ctx:'none', unc:false, sensor:'on', reminded:false, ended:false, endTs:null,
+    sessionStart:ts, boutStart:ts, boutStartDev:Date.now(), boutEnter:(meta.start||'LIE'), boutIsBed:false,
     seq:0, bouts:[], ctxStart:ts, ctxBouts:[], motions:[], markers:[], log:[], undoCount:0, uncCount:0
   };
 }
@@ -108,6 +108,7 @@ function show(id){ SCREENS.forEach(function(s){ $(s).classList.toggle('hidden', 
 function pad(n){return(n<10?'0':'')+n;}
 function clock(ms){var d=new Date(ms);return pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());}
 function dateStr(ms){var d=new Date(ms);return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
+function stampSec(ms){var d=new Date(ms);return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+' '+pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());}
 function isoMs(ms){var d=new Date(ms);return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'T'+pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds())+'.'+String(ms%1000+1000).slice(1);}
 function koState(c){for(var i=0;i<STATES.length;i++)if(STATES[i].c===c)return STATES[i].k;return c;}
 function koCtx(c){for(var i=0;i<CTX.length;i++)if(CTX[i].c===c)return CTX[i].k;return c;}
@@ -301,7 +302,9 @@ function startSession(){
   var obs=($('s_obs').value||'').trim(), pid=($('s_pid').value||'').trim();
   if(!obs){ alert('관찰자 ID를 입력하세요.'); $('s_obs').focus(); return; }
   if(!pid){ alert('환자 익명 ID(measurement_code)를 입력하세요.'); $('s_pid').focus(); return; }
-  S=newSession({obs:obs,pid:pid,set:($('s_set').value||'').trim(),enroll:($('s_enroll').value||'').trim(),serial:($('s_serial').value||'').trim(),note:($('s_note').value||'').trim()});
+  var startState=($('s_start')&&$('s_start').value)||'LIE';
+  var enroll=stampSec(Clock.now());                 // 관찰 시작 누른 시각 자동 저장
+  S=newSession({obs:obs,pid:pid,set:($('s_set').value||'').trim(),enroll:enroll,serial:($('s_serial').value||'').trim(),start:startState});
   CFG.obs=obs; CFG.set=($('s_set').value||'').trim(); saveCfg();
   persistNow().then(function(){ show('codeScreen'); render(); });
 }
@@ -340,7 +343,7 @@ function bind(){
   $('gear').addEventListener('click',openSettings);
   $('resume').addEventListener('click',function(){ if(!S)return; S.ended=false; var ts=Clock.now(); S.boutStart=ts;S.boutStartDev=Clock.deviceNow();S.boutEnter=S.cur;S.boutIsBed=false;S.ctxStart=ts; persist(); show('codeScreen'); render(); });
   $('saveCsv').addEventListener('click',function(){ if(!S)return; download('BEACON_'+S.pid+'_'+S.id+'.csv', matrixToCsv(sessRows(S,true,S.endTs||Clock.now()))); });
-  $('newsess').addEventListener('click',function(){ S=null; $('s_pid').value=''; $('s_note').value=''; $('s_enroll').value=''; $('s_serial').value=''; $('s_obs').value=CFG.obs||''; $('s_set').value=CFG.set||''; show('startScreen'); refreshList(); });
+  $('newsess').addEventListener('click',function(){ S=null; $('s_pid').value=''; $('s_serial').value=''; $('s_obs').value=CFG.obs||''; if($('s_set'))$('s_set').value=CFG.set||''; if($('s_start'))$('s_start').value='LIE'; show('startScreen'); refreshList(); });
   $('exportAll').addEventListener('click',function(){
     idbAll('sessions').then(function(list){
       if(!list.length){ alert('저장된 세션이 없습니다.'); return; }
@@ -373,9 +376,7 @@ function boot(){
   idbOpen().then(loadCfg).then(function(){
     buildButtons(); bind();
     $('clk').textContent=clock(Clock.now());
-    $('s_obs').value=CFG.obs||''; $('s_set').value=CFG.set||'';
-    // 등록일시 기본값(오늘)
-    var d=new Date(); $('s_enroll').value=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+' '+pad(d.getHours())+':'+pad(d.getMinutes());
+    $('s_obs').value=CFG.obs||''; if($('s_set')) $('s_set').value=CFG.set||'';
     return refreshList();
   }).then(function(){
     return Clock.sync();

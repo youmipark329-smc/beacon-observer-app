@@ -174,15 +174,26 @@
         <label class="f">환자 익명 ID (measurement_code)</label>
         <input class="t" id="s_pid" placeholder="예: P-016-001" maxlength="24" spellcheck="false" autocomplete="off">
         <div class="two">
-          <div><label class="f">병동/세트 (set_assign)</label><input class="t" id="s_set" placeholder="예: 16E-A" maxlength="16" spellcheck="false" autocomplete="off"></div>
-          <div><label class="f">등록 일시 (enroll_date)</label><input class="t" id="s_enroll" placeholder="자동" spellcheck="false" autocomplete="off"></div>
+          <div><label class="f">병동 (set_assign)</label>
+            <select class="t" id="s_set">
+              <option value="">병동 선택</option>
+              <option value="16 EAST">16 EAST</option>
+              <option value="15 EAST">15 EAST</option>
+            </select>
+          </div>
+          <div><label class="f">환자 시작 행동</label>
+            <select class="t" id="s_start">
+              <option value="LIE">누움 (LIE)</option>
+              <option value="SIT">앉음 (SIT)</option>
+              <option value="STD">일어섬 (STD)</option>
+              <option value="WLK">걸음 (WLK)</option>
+            </select>
+          </div>
         </div>
         <label class="f">패치 시리얼 (device_serial · 등록연계 ★)</label>
         <input class="t" id="s_serial" placeholder="예: MC-XXXXXXXX (환자 부착 패치 시리얼)" maxlength="32" spellcheck="false" autocomplete="off">
-        <label class="f">세션 메모 (선택)</label>
-        <input class="t" id="s_note" placeholder="예: 주간 근무 / 특이사항" maxlength="80" autocomplete="off">
         <button class="big" id="startBtn" type="button">▶ 관찰 시작</button>
-        <p class="hint">시각동기 상태: <span id="startSync">확인 중…</span></p>
+        <p class="hint">등록 일시는 <b>관찰 시작</b>을 누른 시각으로 자동 저장됩니다 · 시각동기: <span id="startSync">확인 중…</span></p>
       </div>
       <div class="card" id="recentCard">
         <h2>지난 세션 <span style="font-weight:700;color:var(--muted);font-size:12px" id="sessCount"></span></h2>
@@ -270,7 +281,7 @@
     </section>
 
   </div>
-  <div class="brand">BEACON 관찰코딩 · v1.3 (PWA) · <span id="verMode">—</span></div>
+  <div class="brand">BEACON 관찰코딩 · v1.4 (PWA) · <span id="verMode">—</span></div>
 </div>
 
 <div class="toast" id="toast">
