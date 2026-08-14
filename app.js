@@ -8,8 +8,8 @@ var $=function(id){return document.getElementById(id);};
 
 /* ───────── 어휘 (코딩시트 목록과 정합) ───────── */
 var STATES=[{c:'LIE',k:'누움'},{c:'SIT',k:'앉음'},{c:'STD',k:'일어섬'},{c:'WLK',k:'걸음'}];
-var CTX=[{c:'none',k:'관찰 중'},{c:'toilet',k:'화장실'},{c:'procedure',k:'처치'},{c:'off_view',k:'시야이탈'},{c:'off_ward',k:'병동밖'}];
-var MOT=[{c:'tremor',k:'떨림'},{c:'brush_repeat',k:'반복상지'},{c:'scratch',k:'긁기'},{c:'eat',k:'식사'},{c:'turn',k:'뒤척임'},{c:'care',k:'처치'},{c:'other',k:'기타'}];
+var CTX=[{c:'none',k:'관찰 중'},{c:'toilet',k:'화장실'},{c:'procedure',k:'처치중'},{c:'off_view',k:'시야이탈'},{c:'off_ward',k:'병동밖'}];
+var MOT=[{c:'tremor',k:'떨림'},{c:'brush_repeat',k:'반복상지'},{c:'scratch',k:'긁기'},{c:'eat',k:'식사'},{c:'turn',k:'뒤척임'},{c:'care',k:'처치받음'},{c:'other',k:'기타'}];
 var POST={LIE:1,SIT:1,STD:1};                                  // 전환코드는 LIE/SIT/STD 삼각만
 function transCode(from,to){ return (POST[from]&&POST[to]) ? (from+'→'+to) : to; } // WLK 끼면 도착코드
 /* ModeA 17컬럼(코딩시트 스키마 동일 순서) + 시각동기 5컬럼(결합키) */
