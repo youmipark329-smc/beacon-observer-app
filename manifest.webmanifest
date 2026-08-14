@@ -1,0 +1,17 @@
+{
+  "name": "BEACON 병동 행동 관찰코딩",
+  "short_name": "BEACON 관찰",
+  "description": "병동 행동 관찰 단일 연속 코딩 앱 (BEACON 관찰연구) — 무 PII·오프라인·서버시각 동기",
+  "lang": "ko",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#eef1f5",
+  "theme_color": "#1F4E79",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

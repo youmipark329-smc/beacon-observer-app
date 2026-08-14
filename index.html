@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#1F4E79">
+<title>BEACON 관찰코딩</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<style>
+  :root{
+    --bg:#eef1f5; --panel:#fff; --ink:#1a2330; --muted:#5b6775; --line:#d6dde6;
+    --accent:#1F4E79; --accent-2:#2a6db0; --amber:#E8820C; --good:#159a45; --alert:#B00020;
+    --soft:#f2f6fb; --radius:14px; --shadow:0 6px 20px rgba(20,35,55,.12);
+    --safe-b:env(safe-area-inset-bottom,0px);
+  }
+  :root[data-theme="dark"]{ --bg:#0e1520; --panel:#18212e; --ink:#e7eef7; --muted:#9aa7b6; --line:#2a3644;
+    --accent:#5fa0e0; --accent-2:#7bb4ec; --soft:#141d2a; --shadow:0 8px 24px rgba(0,0,0,.5); }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){ --bg:#0e1520; --panel:#18212e; --ink:#e7eef7; --muted:#9aa7b6; --line:#2a3644;
+      --accent:#5fa0e0; --accent-2:#7bb4ec; --soft:#141d2a; --shadow:0 8px 24px rgba(0,0,0,.5); } }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%}
+  body{font-family:-apple-system,"Malgun Gothic","맑은 고딕","Segoe UI",Roboto,sans-serif;
+    background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;overscroll-behavior:none}
+  .app{max-width:560px;margin:0 auto;min-height:100%;display:flex;flex-direction:column}
+  .hidden{display:none!important}
+
+  /* top bar */
+  .top{position:sticky;top:0;z-index:5;background:var(--panel);border-bottom:1px solid var(--line);
+    display:flex;align-items:center;gap:8px;padding:10px 12px;padding-top:calc(10px + env(safe-area-inset-top,0px))}
+  .top .pid{font-weight:800;font-size:14px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .top .clk{font-variant-numeric:tabular-nums;font-size:13px;color:var(--muted);font-weight:700}
+  .sync{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:999px;
+    padding:4px 9px;font-size:11px;font-weight:800;cursor:pointer;user-select:none;color:var(--muted)}
+  .sync .dot{width:9px;height:9px;border-radius:50%;background:var(--good);box-shadow:0 0 0 3px rgba(21,154,69,.16)}
+  .sync.device .dot{background:var(--amber);box-shadow:0 0 0 3px rgba(232,130,12,.16)}
+  .sync.fail .dot{background:var(--alert);box-shadow:0 0 0 3px rgba(176,0,32,.16)}
+  .gear{border:1px solid var(--line);background:transparent;border-radius:10px;width:34px;height:34px;font-size:16px;cursor:pointer;color:var(--ink)}
+
+  .scroll{flex:1;overflow-y:auto;padding:12px 12px calc(16px + var(--safe-b));display:flex;flex-direction:column;gap:12px}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow)}
+  .card h2{margin:0 0 10px;font-size:15px;font-weight:800;color:var(--accent)}
+  .lead{color:var(--muted);font-size:12.5px;line-height:1.5;margin:0 0 12px}
+
+  label.f{display:block;font-size:11.5px;font-weight:800;color:var(--muted);margin:10px 0 4px}
+  label.f:first-of-type{margin-top:0}
+  input.t,select.t{width:100%;border:1px solid var(--line);border-radius:10px;padding:11px 12px;font-size:15px;
+    font-family:inherit;color:var(--ink);background:var(--panel)}
+  input.t:focus,select.t:focus{outline:3px solid var(--accent-2);outline-offset:1px}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .hint{font-size:11px;color:var(--muted);margin:4px 2px 0;line-height:1.45}
+
+  .big{width:100%;border:0;background:var(--accent);color:#fff;border-radius:12px;padding:15px;font-size:16px;
+    font-weight:800;cursor:pointer;font-family:inherit;margin-top:14px}
+  .big.ghost{background:transparent;color:var(--accent);border:1.5px solid var(--accent)}
+  .big.alert{background:var(--alert)}
+  .big:active{transform:scale(.99)}
+  .rowbtns{display:flex;gap:8px;flex-wrap:wrap}
+  .rowbtns .big{margin-top:0;flex:1}
+
+  /* coding */
+  .curwrap{display:flex;justify-content:space-between;align-items:baseline;background:var(--soft);
+    border-radius:12px;padding:11px 14px;margin-bottom:4px}
+  .curlbl{font-size:11px;color:var(--muted);font-weight:700}
+  .cur{font-size:24px;font-weight:800;margin-top:2px}
+  .cur b{color:var(--accent)} .cur .be{font-size:12px;font-weight:800;color:var(--good);margin-left:6px}
+  .held{font-size:12px;color:var(--muted);font-weight:800;font-variant-numeric:tabular-nums}
+  .held b{color:var(--accent)}
+  .states{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .stbtn{border:1.5px solid var(--line);background:var(--panel);border-radius:14px;padding:16px 0 11px;text-align:center;
+    cursor:pointer;color:var(--ink);font-family:inherit}
+  .stbtn:active{transform:scale(.96)}
+  .stbtn .ko{display:block;font-size:19px;font-weight:800;line-height:1.1}
+  .stbtn .en{display:block;font-size:10px;color:var(--muted);margin-top:3px;letter-spacing:.05em}
+  .stbtn.on{background:var(--accent);border-color:var(--accent)}
+  .stbtn.on .ko{color:#fff}.stbtn.on .en{color:#d3e4f6}
+  .stbtn:disabled{opacity:.38;pointer-events:none}
+  .rowlbl{font-size:12px;font-weight:800;color:var(--muted);margin:2px 2px 6px;display:flex;gap:6px;align-items:center}
+  .tag{font-size:10px;font-weight:700;color:var(--muted);opacity:.8}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:8px 13px;font-size:14px;
+    cursor:pointer;color:var(--ink);font-family:inherit}
+  .chip:active{transform:scale(.95)}
+  .chip.motion.on{background:rgba(42,109,176,.14);border-color:var(--accent);color:var(--accent-2);font-weight:800}
+  .chip.ctx.on{background:rgba(232,130,12,.14);border-color:var(--amber);color:#a15a00;font-weight:800}
+  :root[data-theme="dark"] .chip.ctx.on{color:#f0b072}
+  .chip.disabled{opacity:.36;pointer-events:none}
+  .miscrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .toggle{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:8px 13px;font-size:13.5px;
+    cursor:pointer;color:var(--ink);font-family:inherit}
+  .toggle.on{background:rgba(176,0,32,.12);border-color:var(--alert);color:var(--alert);font-weight:800}
+  .toggle.senswarn{background:rgba(232,130,12,.14);border-color:var(--amber);color:#a15a00;font-weight:800}
+  :root[data-theme="dark"] .toggle.senswarn{color:#f0b072}
+  .memo{flex:1;min-width:130px;border:1px solid var(--line);border-radius:10px;padding:9px 11px;font-size:14px;
+    font-family:inherit;color:var(--ink);background:var(--panel)}
+  .memo.req{border-color:var(--alert);background:rgba(176,0,32,.06)}
+  .banner{border-radius:10px;padding:9px 12px;font-size:12.5px;font-weight:800;display:none}
+  .banner.ctx{display:block;background:rgba(232,130,12,.12);color:#a15a00;border:1px solid rgba(232,130,12,.5)}
+  .banner.lock{display:block;background:var(--soft);color:var(--muted);border:1px dashed var(--line)}
+  :root[data-theme="dark"] .banner.ctx{color:#f0b072}
+  .log h4{margin:0 0 6px;font-size:11px;color:var(--muted);font-weight:800;display:flex;justify-content:space-between}
+  .log h4 a{color:var(--accent);cursor:pointer;font-weight:800}
+  .events{list-style:none;margin:0;padding:0;max-height:150px;overflow-y:auto;font-size:13px}
+  .events li{display:flex;gap:8px;align-items:center;padding:4px 0;border-bottom:1px dashed var(--line);font-variant-numeric:tabular-nums}
+  .events li:last-child{border-bottom:0}
+  .events .t{color:var(--muted);font-size:11px} .events .c{font-weight:800}
+  .events .bd{color:var(--good)} .events .d{color:var(--muted);font-size:11px;margin-left:auto}
+  .events .empty{color:var(--muted);text-align:center;padding:10px 0}
+
+  /* toast */
+  .toast{position:fixed;left:12px;right:12px;bottom:calc(14px + var(--safe-b));max-width:536px;margin:0 auto;
+    background:#2a2016;color:#fff;border-radius:12px;padding:12px 13px;box-shadow:0 10px 26px rgba(0,0,0,.4);
+    display:flex;gap:10px;align-items:center;transform:translateY(160%);transition:transform .26s cubic-bezier(.2,.9,.3,1);z-index:20}
+  .toast.show{transform:translateY(0)}
+  .toast .ico{font-size:20px}.toast .msg{flex:1;font-size:13px;line-height:1.35}.toast .msg b{color:#ffd08a}
+  .toast button{background:#ffb454;color:#3a2600;border:0;border-radius:8px;padding:7px 11px;font-weight:800;font-size:13px;cursor:pointer;font-family:inherit}
+
+  /* summary / kpis */
+  .kpis{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+  .kpi{background:var(--soft);border-radius:11px;padding:10px 12px}
+  .kpi .v{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.1}
+  .kpi .l{font-size:11px;color:var(--muted);font-weight:700;margin-top:2px}
+  .kpi.good .v{color:var(--good)}.kpi.warn .v{color:var(--amber)}.kpi.alert .v{color:var(--alert)}
+  .stbl{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:6px}
+  .stbl th,.stbl td{border-bottom:1px solid var(--line);padding:6px;text-align:left;font-variant-numeric:tabular-nums}
+  .stbl th{color:var(--muted);font-weight:800;font-size:11px}
+  .stbl td.n{text-align:right}
+  .bar{height:6px;border-radius:3px;background:var(--accent);display:inline-block;vertical-align:middle}
+
+  .sesslist{list-style:none;margin:0;padding:0}
+  .sesslist li{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+  .sesslist li:last-child{border-bottom:0}
+  .sesslist .meta{flex:1;min-width:0}
+  .sesslist .m1{font-weight:800;font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .sesslist .m2{font-size:11px;color:var(--muted);margin-top:2px}
+  .sesslist .sbtn{border:1px solid var(--accent);background:transparent;color:var(--accent);border-radius:9px;
+    padding:7px 10px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit}
+  .pill{display:inline-block;font-size:10px;font-weight:800;border-radius:999px;padding:2px 7px;margin-left:6px}
+  .pill.open{background:rgba(232,130,12,.14);color:#a15a00}
+  .pill.done{background:rgba(21,154,69,.14);color:var(--good)}
+  :root[data-theme="dark"] .pill.open{color:#f0b072}
+  .brand{font-size:11px;color:var(--muted);text-align:center;padding:6px 0 calc(10px + var(--safe-b))}
+  @media (prefers-reduced-motion:reduce){.toast,.stbtn,.chip{transition:none}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <span class="pid" id="pidlbl">BEACON 관찰코딩</span>
+    <span class="clk" id="clk">--:--:--</span>
+    <span class="sync" id="sync" role="button" tabindex="0" title="탭하여 지금 재동기"><span class="dot"></span><span id="synctxt">동기</span></span>
+    <button class="gear" id="gear" type="button" aria-label="설정">⚙</button>
+  </div>
+  <div class="scroll" id="scroll">
+
+    <!-- ========== 세션 시작 화면 ========== -->
+    <section id="startScreen">
+      <div class="card">
+        <h2>새 관찰 세션 시작</h2>
+        <p class="lead">환자 <b>익명 ID(measurement_code)</b> 만 입력합니다. 실명·등록번호·주민번호 등 개인정보는 절대 입력하지 마세요.</p>
+        <label class="f">관찰자 ID (observer_id)</label>
+        <input class="t" id="s_obs" placeholder="예: OBS-01" maxlength="16" spellcheck="false" autocomplete="off">
+        <label class="f">환자 익명 ID (measurement_code)</label>
+        <input class="t" id="s_pid" placeholder="예: P-016-001" maxlength="24" spellcheck="false" autocomplete="off">
+        <div class="two">
+          <div><label class="f">병동/세트 (set_assign)</label><input class="t" id="s_set" placeholder="예: 16E-A" maxlength="16" spellcheck="false" autocomplete="off"></div>
+          <div><label class="f">등록 일시 (enroll_date)</label><input class="t" id="s_enroll" placeholder="자동" spellcheck="false" autocomplete="off"></div>
+        </div>
+        <label class="f">세션 메모 (선택)</label>
+        <input class="t" id="s_note" placeholder="예: 주간 근무 / 특이사항" maxlength="80" autocomplete="off">
+        <button class="big" id="startBtn" type="button">▶ 관찰 시작</button>
+        <p class="hint">시각동기 상태: <span id="startSync">확인 중…</span></p>
+      </div>
+      <div class="card" id="recentCard">
+        <h2>지난 세션 <span style="font-weight:700;color:var(--muted);font-size:12px" id="sessCount"></span></h2>
+        <ul class="sesslist" id="sesslist"><li class="empty" style="color:var(--muted);padding:8px 0">아직 저장된 세션이 없습니다.</li></ul>
+        <div class="rowbtns" style="margin-top:12px">
+          <button class="big ghost" id="exportAll" type="button">전체 CSV 내보내기</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== 코딩 화면 ========== -->
+    <section id="codeScreen" class="hidden">
+      <div class="curwrap">
+        <div><div class="curlbl">현재 상태</div><div class="cur" id="cur">누움 <b>(LIE)</b></div></div>
+        <div class="held">체류 <b id="held">0s</b></div>
+      </div>
+      <div class="states" id="states"></div>
+      <div class="card">
+        <div class="rowlbl">🩺 움직임상세 <span class="tag">LIE/SIT/STD · 복수</span></div>
+        <div class="chips" id="motions"></div>
+        <div class="rowlbl" style="margin-top:12px">맥락 <span class="tag">자세와 독립</span></div>
+        <div class="chips" id="contexts"></div>
+        <div id="ctxbanner" class="banner" style="margin-top:10px"></div>
+        <div id="lockbanner" class="banner" style="margin-top:8px"></div>
+        <div class="miscrow" style="margin-top:12px">
+          <button class="toggle" id="unc" type="button">⚠ 불확실</button>
+          <button class="toggle" id="sensorbtn" type="button">센서 <b id="sensor">on</b></button>
+          <input class="memo" id="memo" placeholder="메모 ✎ (불확실 시 필수)" autocomplete="off">
+        </div>
+      </div>
+      <div class="card log">
+        <h4>이벤트 로그 <a id="undo" role="button" tabindex="0">실행취소</a></h4>
+        <ul class="events" id="events"><li class="empty">아직 기록 없음 — 상태 버튼을 눌러보세요</li></ul>
+      </div>
+      <button class="big" id="endbtn" type="button">■ 세션 종료 요약</button>
+    </section>
+
+    <!-- ========== 세션 종료 요약 ========== -->
+    <section id="summaryScreen" class="hidden">
+      <div class="card">
+        <h2>세션 종료 요약</h2>
+        <p class="lead" id="ssub">자동 집계</p>
+        <div class="kpis" id="kpis"></div>
+        <table class="stbl" id="stbl"></table>
+        <div class="rowbtns" style="margin-top:8px">
+          <button class="big ghost" id="resume" type="button">← 코딩 계속</button>
+          <button class="big" id="saveCsv" type="button">CSV 저장</button>
+        </div>
+        <button class="big" id="newsess" type="button" style="margin-top:8px">✔ 세션 마감 · 새 세션</button>
+      </div>
+    </section>
+
+    <!-- ========== 설정 화면 ========== -->
+    <section id="settingsScreen" class="hidden">
+      <div class="card">
+        <h2>설정</h2>
+        <label class="f">서버 시각 엔드포인트 (선택)</label>
+        <input class="t" id="cfg_time" placeholder="예: https://research.smc/api/v1/time" spellcheck="false" autocomplete="off">
+        <p class="hint">비우면 <b>기기 시계(안드로이드 자동 날짜·시각 = 외부망 NTP)</b> 를 사용하고 오프셋 0으로 기록합니다. 입력 시 앱이 60초마다 이 주소로 서버시각을 받아 <b>오프셋+왕복지연</b> 을 계산합니다(JSON <code>{now:epoch_ms}</code> 또는 HTTP Date 헤더 지원 · CORS 허용 필요).</p>
+        <label class="f">기본 관찰자 ID</label>
+        <input class="t" id="cfg_obs" placeholder="예: OBS-01" maxlength="16" spellcheck="false" autocomplete="off">
+        <label class="f">기본 병동/세트</label>
+        <input class="t" id="cfg_set" placeholder="예: 16E-A" maxlength="16" spellcheck="false" autocomplete="off">
+        <label class="f">화면 테마</label>
+        <select class="t" id="cfg_theme"><option value="system">시스템</option><option value="light">밝게</option><option value="dark">어둡게</option></select>
+        <button class="big" id="saveCfg" type="button">저장</button>
+        <button class="big ghost" id="closeCfg" type="button" style="margin-top:8px">닫기</button>
+        <div style="border-top:1px solid var(--line);margin-top:16px;padding-top:12px">
+          <div class="rowlbl">현재 동기 상태</div>
+          <p class="hint" id="cfgSyncInfo">—</p>
+          <button class="big ghost" id="resyncBtn" type="button">지금 재동기</button>
+        </div>
+      </div>
+      <div class="card">
+        <h2>데이터 관리</h2>
+        <p class="hint">모든 데이터는 이 폰의 브라우저 저장소(IndexedDB)에만 있습니다. 서버 전송은 CSV 내보내기로 수행합니다.</p>
+        <button class="big alert" id="wipeBtn" type="button" style="margin-top:10px">전체 데이터 삭제</button>
+      </div>
+    </section>
+
+  </div>
+  <div class="brand">BEACON 관찰코딩 · v1.0 (PWA) · <span id="verMode">—</span></div>
+</div>
+
+<div class="toast" id="toast">
+  <span class="ico">🚪</span>
+  <span class="msg"><b>일어남 먼저?</b> 자리 뜰 땐 <b>LIE→SIT/STD</b>(bed-exit)를 먼저 태핑하세요 — 1차 종료점 유실 방지.</span>
+  <button id="toastok" type="button">확인</button>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
