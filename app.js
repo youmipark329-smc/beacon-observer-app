@@ -187,7 +187,7 @@ function render(){
   $('held').innerHTML=fmtDur(openDur);
   Array.prototype.forEach.call(sc.children,function(b){ b.classList.toggle('on',b.dataset.c===S.cur); b.disabled=LOCKED()||S.ended; });
   Array.prototype.forEach.call(mc.children,function(b){ b.classList.toggle('disabled',LOCKED()||S.cur==='WLK'||S.ended); });
-  Array.prototype.forEach.call(cc.children,function(b){ b.classList.toggle('on',b.dataset.c===S.ctx&&S.ctx!=='none'); });
+  Array.prototype.forEach.call(cc.children,function(b){ var a=b.dataset.c===S.ctx; b.classList.toggle('on',a&&b.dataset.c!=='none'); b.classList.toggle('onnone',a&&b.dataset.c==='none'); });
   var cb=$('ctxbanner'),lb=$('lockbanner'); cb.className='banner'; lb.className='banner';
   if(S.ctx!=='none'){ cb.className='banner ctx'; cb.textContent='⚠ 맥락: '+koCtx(S.ctx)+' — 관찰 복귀를 상기'; }
   if(LOCKED()){ lb.className='banner lock'; lb.textContent='🔒 미관찰(상태 입력 잠금) — 관찰 복귀 시 자동 해제'; }
