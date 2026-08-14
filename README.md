@@ -23,6 +23,15 @@ observer_app_pwa_20260814/
 
 ## 2. 갤럭시에 올리는 방법 — 3가지 (택1)
 
+> **배포 현황 (2026-08-14):** GitHub Pages 공개 저장소 `youmipark329-smc/beacon-observer-app`
+> (main/root)로 **배포·라이브 검증까지 완료**(주소 `https://youmipark329-smc.github.io/beacon-observer-app/`,
+> service worker 제어·오프라인 설치 확인). 이후 **웹주소는 임시 비활성(Pages 비활성화)** 한 상태 —
+> **저장소·파일·소스는 그대로 보존**. 파일럿 등에서 필요할 때 **Pages를 다시 켜면 같은 주소로 즉시 복구**됩니다
+> (gh: `gh api -X POST repos/youmipark329-smc/beacon-observer-app/pages -f "source[branch]=main" -f "source[path]=/"`).
+> 이미 설치된 폰의 앱·데이터(IndexedDB)는 주소 비활성과 무관하게 유지됩니다.
+> **앱 업데이트:** service worker가 **network-first(v2)** 라, 소스를 고쳐 재호스팅하면
+> 설치된 기기도 **다음 온라인 실행 시 자동으로 최신본**을 받습니다(옛 버전 고착 없음). 오프라인이면 마지막 캐시로 동작.
+
 PWA는 **HTTPS 주소로 열어야** "홈 화면에 추가 + 오프라인 설치"가 됩니다.
 
 ### 방법 A — GitHub Pages (무료·권장, 무 PII라 공개 저장소 OK)
@@ -62,8 +71,10 @@ PWA는 **HTTPS 주소로 열어야** "홈 화면에 추가 + 오프라인 설치
   세션 내 경과시간이 어긋나지 않습니다. 저장 컬럼: `t_server_start/end`(ISO ms)·`clock_offset_ms`·`sync_flag`.
 
 ## 5. 데이터·CSV
-- **컬럼(22):** ModeA 코딩시트 17컬럼(`record_id … motion_detail`) + 결합용 5컬럼
-  (`t_server_start`,`t_server_end`,`clock_offset_ms`,`sync_flag`,`session_id`).
+- **컬럼(23):** ModeA 코딩시트 17컬럼(`record_id … motion_detail`) + 결합/메타 6컬럼
+  (`t_server_start`,`t_server_end`,`clock_offset_ms`,`sync_flag`,`session_id`,`device_serial`).
+  `record_id`는 **이벤트 생성 시점에 고정**(undo 후에도 불변) → 서버 재적재 시 `(session_id, record_id)` 로 **멱등(중복0)**.
+  `device_serial`(패치 시리얼)은 세션 시작화면 ★필드에서 입력(등록연계, RFP §6-5).
 - **내보내기:** 세션 종료 요약 화면의 **CSV 저장**, 또는 시작화면 **전체 CSV 내보내기**(모든 세션 1파일),
   또는 지난 세션 목록의 **CSV** 버튼(세션별). UTF-8 BOM·CRLF(엑셀 호환).
 - **결합:** 서버에서 `patient_id`(=measurement_code) + `t_server`(±매칭창)로

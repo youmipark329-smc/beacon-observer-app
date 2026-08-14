@@ -15,7 +15,7 @@ function transCode(from,to){ return (POST[from]&&POST[to]) ? (from+'→'+to) : t
 /* ModeA 17컬럼(코딩시트 스키마 동일 순서) + 시각동기 5컬럼(결합키) */
 var HEAD_CORE=['record_id','observer_id','patient_id','date','time_start','time_end','code','is_bed_exit',
   'context','in_bed_move','sensor_status','uncertain','duration_sec','note','enroll_date','set_assign','motion_detail'];
-var HEAD_TIME=['t_server_start','t_server_end','clock_offset_ms','sync_flag','session_id'];
+var HEAD_TIME=['t_server_start','t_server_end','clock_offset_ms','sync_flag','session_id','device_serial'];
 var HEAD=HEAD_CORE.concat(HEAD_TIME);
 
 /* ───────── 시각동기 모듈 (단조앵커 + Cristian) ───────── */
@@ -89,11 +89,11 @@ function newSession(meta){
   var ts=Clock.now();
   return {
     id:'S'+Date.now()+'-'+Math.floor(performance.now()),
-    obs:meta.obs, pid:meta.pid, set:meta.set||'', enroll:meta.enroll||'', sessNote:meta.note||'',
+    obs:meta.obs, pid:meta.pid, set:meta.set||'', enroll:meta.enroll||'', serial:meta.serial||'', sessNote:meta.note||'',
     createdDevice:Date.now(),
     cur:'LIE', ctx:'none', unc:false, sensor:'on', reminded:false, ended:false, endTs:null,
     sessionStart:ts, boutStart:ts, boutStartDev:Date.now(), boutEnter:'LIE', boutIsBed:false,
-    bouts:[], ctxStart:ts, ctxBouts:[], motions:[], log:[], undoCount:0, uncCount:0
+    seq:0, bouts:[], ctxStart:ts, ctxBouts:[], motions:[], log:[], undoCount:0, uncCount:0
   };
 }
 var _saveT=null;
@@ -134,7 +134,7 @@ function buildButtons(){
 function tapState(c){
   if(!S||S.ended||LOCKED()||c===S.cur)return;
   var ts=Clock.now(), dev=Clock.deviceNow(), nt=memoVal();
-  S.bouts.push({state:S.cur,enter:S.boutEnter,isBed:S.boutIsBed,start:S.boutStart,startDev:S.boutStartDev,
+  S.bouts.push({rid:'r'+(++S.seq),state:S.cur,enter:S.boutEnter,isBed:S.boutIsBed,start:S.boutStart,startDev:S.boutStartDev,
     end:ts,endDev:dev,dur:(ts-S.boutStart)/1000,ctx:S.ctx,unc:S.unc,note:nt,offset:Clock.offsetMs,flag:Clock.flag});
   var isBed=(S.cur==='LIE'&&(c==='SIT'||c==='STD'));
   S.log.push({t:clock(ts),kind:'transition',code:transCode(S.cur,c),bed:isBed,dur:(ts-S.boutStart)/1000,from:S.cur});
@@ -144,7 +144,7 @@ function tapState(c){
 function tapMotion(m,b){
   if(!S||S.ended||LOCKED()||S.cur==='WLK')return;
   var ts=Clock.now(), ibm=(S.cur==='LIE'&&m.c==='turn'), nt=memoVal();
-  S.motions.push({t:ts,tDev:Clock.deviceNow(),state:S.cur,code:m.c,ibm:ibm,unc:S.unc,note:nt,offset:Clock.offsetMs,flag:Clock.flag});
+  S.motions.push({rid:'r'+(++S.seq),t:ts,tDev:Clock.deviceNow(),state:S.cur,code:m.c,ibm:ibm,unc:S.unc,note:nt,offset:Clock.offsetMs,flag:Clock.flag});
   S.log.push({t:clock(ts),kind:'motion',code:'motion:'+m.c+(ibm?' (in_bed_move=1)':''),bed:false});
   b.classList.add('on'); setTimeout(function(){b.classList.remove('on');},420);
   if(nt)$('memo').value=''; persist(); render();
@@ -199,7 +199,7 @@ function render(){
 /* ───────── CSV ───────── */
 function boutRows(sess,nowTs){
   var rows=sess.bouts.slice();
-  if(!sess.ended){ rows=rows.concat([{state:sess.cur,enter:sess.boutEnter,isBed:sess.boutIsBed,start:sess.boutStart,startDev:sess.boutStartDev,
+  if(!sess.ended){ rows=rows.concat([{rid:'r'+((sess.seq||0)+1),state:sess.cur,enter:sess.boutEnter,isBed:sess.boutIsBed,start:sess.boutStart,startDev:sess.boutStartDev,
     end:nowTs,endDev:Clock.deviceNow(),dur:(nowTs-sess.boutStart)/1000,ctx:sess.ctx,unc:sess.unc,note:'',offset:Clock.offsetMs,flag:Clock.flag,open:true}]); }
   return rows;
 }
@@ -207,14 +207,14 @@ function csvEscape(v){v=String(v==null?'':v);return /[",\n]/.test(v)?('"'+v.repl
 function sessRows(sess,includeHead,nowTs){
   var out=includeHead?[HEAD.slice()]:[], n=1;
   boutRows(sess,nowTs).forEach(function(b){
-    out.push(['r'+(n++),sess.obs,sess.pid,dateStr(b.start),clock(b.start),b.open?'(진행중)':clock(b.end),
+    out.push([b.rid||('r'+(n++)),sess.obs,sess.pid,dateStr(b.start),clock(b.start),b.open?'(진행중)':clock(b.end),
       b.enter,b.isBed?1:0,b.ctx,0,sess.sensor,b.unc?1:0,b.dur.toFixed(1),b.note||'',sess.enroll,sess.set||'','',
-      isoMs(b.start),b.open?'':isoMs(b.end),(b.offset==null?'':b.offset),b.flag||'',sess.id]);
+      isoMs(b.start),b.open?'':isoMs(b.end),(b.offset==null?'':b.offset),b.flag||'',sess.id,sess.serial||'']);
   });
   sess.motions.forEach(function(m){
-    out.push(['r'+(n++),sess.obs,sess.pid,dateStr(m.t),clock(m.t),clock(m.t),
+    out.push([m.rid||('r'+(n++)),sess.obs,sess.pid,dateStr(m.t),clock(m.t),clock(m.t),
       'motion',0,'',m.ibm?1:0,sess.sensor,m.unc?1:0,'0.0',m.note||'',sess.enroll,sess.set||'',m.code,
-      isoMs(m.t),isoMs(m.t),(m.offset==null?'':m.offset),m.flag||'',sess.id]);
+      isoMs(m.t),isoMs(m.t),(m.offset==null?'':m.offset),m.flag||'',sess.id,sess.serial||'']);
   });
   return out;
 }
@@ -227,7 +227,7 @@ function download(name,text){ var blob=new Blob([text],{type:'text/csv;charset=u
 function endSession(){
   if(!S||S.ended)return;
   var ts=Clock.now();
-  S.bouts.push({state:S.cur,enter:S.boutEnter,isBed:S.boutIsBed,start:S.boutStart,startDev:S.boutStartDev,
+  S.bouts.push({rid:'r'+(++S.seq),state:S.cur,enter:S.boutEnter,isBed:S.boutIsBed,start:S.boutStart,startDev:S.boutStartDev,
     end:ts,endDev:Clock.deviceNow(),dur:(ts-S.boutStart)/1000,ctx:S.ctx,unc:S.unc,note:memoVal(),offset:Clock.offsetMs,flag:Clock.flag});
   S.ctxBouts.push({ctx:S.ctx,start:S.ctxStart,end:ts,dur:(ts-S.ctxStart)/1000});
   S.ended=true; S.endTs=ts; persistNow(); buildSummary(S,ts); show('summaryScreen');
@@ -285,7 +285,7 @@ function startSession(){
   var obs=($('s_obs').value||'').trim(), pid=($('s_pid').value||'').trim();
   if(!obs){ alert('관찰자 ID를 입력하세요.'); $('s_obs').focus(); return; }
   if(!pid){ alert('환자 익명 ID(measurement_code)를 입력하세요.'); $('s_pid').focus(); return; }
-  S=newSession({obs:obs,pid:pid,set:($('s_set').value||'').trim(),enroll:($('s_enroll').value||'').trim(),note:($('s_note').value||'').trim()});
+  S=newSession({obs:obs,pid:pid,set:($('s_set').value||'').trim(),enroll:($('s_enroll').value||'').trim(),serial:($('s_serial').value||'').trim(),note:($('s_note').value||'').trim()});
   CFG.obs=obs; CFG.set=($('s_set').value||'').trim(); saveCfg();
   persistNow().then(function(){ show('codeScreen'); render(); });
 }
@@ -323,7 +323,7 @@ function bind(){
   $('gear').addEventListener('click',openSettings);
   $('resume').addEventListener('click',function(){ if(!S)return; S.ended=false; var ts=Clock.now(); S.boutStart=ts;S.boutStartDev=Clock.deviceNow();S.boutEnter=S.cur;S.boutIsBed=false;S.ctxStart=ts; persist(); show('codeScreen'); render(); });
   $('saveCsv').addEventListener('click',function(){ if(!S)return; download('BEACON_'+S.pid+'_'+S.id+'.csv', matrixToCsv(sessRows(S,true,S.endTs||Clock.now()))); });
-  $('newsess').addEventListener('click',function(){ S=null; $('s_pid').value=''; $('s_note').value=''; $('s_enroll').value=''; $('s_obs').value=CFG.obs||''; $('s_set').value=CFG.set||''; show('startScreen'); refreshList(); });
+  $('newsess').addEventListener('click',function(){ S=null; $('s_pid').value=''; $('s_note').value=''; $('s_enroll').value=''; $('s_serial').value=''; $('s_obs').value=CFG.obs||''; $('s_set').value=CFG.set||''; show('startScreen'); refreshList(); });
   $('exportAll').addEventListener('click',function(){
     idbAll('sessions').then(function(list){
       if(!list.length){ alert('저장된 세션이 없습니다.'); return; }
