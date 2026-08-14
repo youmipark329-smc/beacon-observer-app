@@ -173,12 +173,14 @@
         <input class="t" id="s_obs" placeholder="예: OBS-01" maxlength="16" spellcheck="false" autocomplete="off">
         <label class="f">환자 익명 ID (measurement_code)</label>
         <input class="t" id="s_pid" placeholder="예: P-016-001" maxlength="24" spellcheck="false" autocomplete="off">
+        <label class="f">패치 시리얼 (device_serial · 등록연계 ★)</label>
+        <input class="t" id="s_serial" placeholder="예: MC-XXXXXXXX (환자 부착 패치 시리얼)" maxlength="32" spellcheck="false" autocomplete="off">
         <div class="two">
           <div><label class="f">병동 (set_assign)</label>
             <select class="t" id="s_set">
               <option value="">병동 선택</option>
-              <option value="16E">16 EAST</option>
-              <option value="15E">15 EAST</option>
+              <option value="16E">16E</option>
+              <option value="15E">15E</option>
             </select>
           </div>
           <div><label class="f">환자 시작 행동</label>
@@ -190,8 +192,6 @@
             </select>
           </div>
         </div>
-        <label class="f">패치 시리얼 (device_serial · 등록연계 ★)</label>
-        <input class="t" id="s_serial" placeholder="예: MC-XXXXXXXX (환자 부착 패치 시리얼)" maxlength="32" spellcheck="false" autocomplete="off">
         <button class="big" id="startBtn" type="button">▶ 관찰 시작</button>
         <p class="hint">등록 일시는 <b>관찰 시작</b>을 누른 시각으로 자동 저장됩니다 · 시각동기: <span id="startSync">확인 중…</span></p>
       </div>
@@ -281,7 +281,7 @@
     </section>
 
   </div>
-  <div class="brand">BEACON 관찰코딩 · v1.5 (PWA) · <span id="verMode">—</span></div>
+  <div class="brand">BEACON 관찰코딩 · v1.6 (PWA) · <span id="verMode">—</span></div>
 </div>
 
 <div class="toast" id="toast">
