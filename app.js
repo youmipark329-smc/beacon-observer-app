@@ -335,7 +335,7 @@ function bind(){
   $('undo').addEventListener('click',doUndo);
   $('undo').addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){doUndo();e.preventDefault();}});
   $('unc').addEventListener('click',function(){if(!S||S.ended)return;S.unc=!S.unc;if(S.unc)S.uncCount++;persist();render();$('memo').focus();});
-  $('sensorbtn').addEventListener('click',function(){if(!S||S.ended)return;var o=['on','off','unknown'];S.sensor=o[(o.indexOf(S.sensor)+1)%3];persist();render();});
+  $('sensorbtn').addEventListener('click',function(){if(!S||S.ended)return;S.sensor=(S.sensor==='on')?'off':'on';persist();render();});
   $('memo').addEventListener('input',render);
   $('toastok').addEventListener('click',function(){$('toast').classList.remove('show');});
   $('sync').addEventListener('click',function(){Clock.sync();});
