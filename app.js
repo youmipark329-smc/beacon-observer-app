@@ -193,7 +193,7 @@ function render(){
   if(S.ctx!=='none'){ cb.className='banner ctx'; cb.textContent='⚠ 맥락: '+koCtx(S.ctx)+' — 관찰 복귀를 상기'; }
   if(LOCKED()){ lb.className='banner lock'; lb.textContent='🔒 미관찰(상태 입력 잠금) — 관찰 복귀 시 자동 해제'; }
   $('unc').classList.toggle('on',S.unc);
-  $('sensor').textContent=S.sensor; $('sensorbtn').classList.toggle('senswarn',S.sensor!=='on');
+  $('sensor').textContent=S.sensor; $('sensorbtn').classList.toggle('senson',S.sensor==='on'); $('sensorbtn').classList.toggle('senswarn',S.sensor!=='on');
   $('memo').classList.toggle('req',S.unc&&!$('memo').value.trim());
   var mcEl=$('mcount'); if(mcEl) mcEl.textContent=(S.markers||[]).length;
   var ul=$('events');
